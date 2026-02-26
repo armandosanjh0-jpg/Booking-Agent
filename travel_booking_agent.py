@@ -32,7 +32,8 @@ class TripRequest:
 @dataclass(frozen=True)
 class FlightOption:
     airline: str
-    route: str
+    origin: str
+    destination: str
     cabin: str
     price: int
     duration_hours: float
@@ -60,7 +61,13 @@ class TravelBookingAgent:
         self._hotels = list(hotels)
 
     def recommend_flights(self, profile: UserProfile, trip: TripRequest, limit: int = 3) -> List[FlightOption]:
-        candidates = [f for f in self._flights if f.price <= trip.max_budget]
+        candidates = [
+            f
+            for f in self._flights
+            if f.price <= trip.max_budget
+            and f.origin.lower() == trip.origin.lower()
+            and f.destination.lower() == trip.destination.lower()
+        ]
         ranked = sorted(candidates, key=lambda f: self._flight_score(profile, trip, f), reverse=True)
         return ranked[:limit]
 
@@ -124,10 +131,10 @@ class TravelBookingAgent:
 
 def sample_agent() -> TravelBookingAgent:
     flights = [
-        FlightOption("SkyWays", "NYC -> BCN", "economy", 680, 8.2, ["relaxation", "city"]),
-        FlightOption("Global Air", "NYC -> BCN", "business", 1240, 8.0, ["business", "city"]),
-        FlightOption("BlueJet", "NYC -> BCN", "economy", 540, 10.1, ["budget", "adventure"]),
-        FlightOption("AeroLux", "NYC -> BCN", "premium economy", 890, 8.6, ["comfort", "relaxation"]),
+        FlightOption("SkyWays", "NYC", "BCN", "economy", 680, 8.2, ["relaxation", "city"]),
+        FlightOption("Global Air", "NYC", "BCN", "business", 1240, 8.0, ["business", "city"]),
+        FlightOption("BlueJet", "NYC", "BCN", "economy", 540, 10.1, ["budget", "adventure"]),
+        FlightOption("AeroLux", "NYC", "BCN", "premium economy", 890, 8.6, ["comfort", "relaxation"]),
     ]
 
     hotels = [
@@ -169,7 +176,10 @@ if __name__ == "__main__":
     plan = build_personalized_plan(user, trip_request)
     print("Top flight recommendations:")
     for flight in plan["flights"]:
-        print(f"- {flight.airline} | {flight.cabin} | ${flight.price} | {flight.duration_hours}h")
+        print(
+            f"- {flight.airline} | {flight.origin}->{flight.destination} | "
+            f"{flight.cabin} | ${flight.price} | {flight.duration_hours}h"
+        )
 
     print("\nTop hotel recommendations:")
     for hotel in plan["hotels"]:

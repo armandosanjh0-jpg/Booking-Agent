@@ -1,6 +1,14 @@
 import unittest
 
-from travel_booking_agent import TripRequest, UserProfile, build_personalized_plan, sample_agent
+from travel_booking_agent import (
+    FlightOption,
+    HotelOption,
+    TravelBookingAgent,
+    TripRequest,
+    UserProfile,
+    build_personalized_plan,
+    sample_agent,
+)
 
 
 class TravelBookingAgentTests(unittest.TestCase):
@@ -30,6 +38,24 @@ class TravelBookingAgentTests(unittest.TestCase):
 
         self.assertIn("high-speed wifi", amenities)
         self.assertIn("workspace", amenities)
+
+    def test_recommend_flights_only_returns_requested_itinerary(self):
+        agent = TravelBookingAgent(
+            flights=[
+                FlightOption("FastHop", "NYC", "BCN", "economy", 650, 8.5, ["city"]),
+                FlightOption("CheapElsewhere", "NYC", "LAX", "economy", 120, 6.0, ["budget"]),
+                FlightOption("QuickElsewhere", "BOS", "BCN", "economy", 500, 7.1, ["city"]),
+            ],
+            hotels=[HotelOption("Dummy Hotel", "Center", 100, "business", ["wifi"])],
+        )
+        profile = UserProfile(name="Casey", seat_preference="economy")
+        trip = TripRequest("NYC", "BCN", "business", nights=2, max_budget=1000)
+
+        flights = agent.recommend_flights(profile, trip, limit=5)
+
+        self.assertEqual(len(flights), 1)
+        self.assertEqual(flights[0].origin, "NYC")
+        self.assertEqual(flights[0].destination, "BCN")
 
 
 if __name__ == "__main__":
